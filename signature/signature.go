@@ -71,7 +71,7 @@ func (sd *SignatureData) SignRequest(r *http.Request) error {
 	signatureCESR := cesr.Encode(signature, "0B")
 
 	r.Header.Add("signature-input", signatureInput)
-	r.Header.Add("signature", fmt.Sprintf("indexed=\"?0\";signify=\"%s", signatureCESR))
+	r.Header.Add("signature", fmt.Sprintf("indexed=\"?0\";signify=\"%s\"", signatureCESR))
 
 	return nil
 }
