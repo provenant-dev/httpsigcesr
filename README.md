@@ -33,8 +33,8 @@ func readPemFile(fileName string) ([]byte, error) {
 }
 
 type ExampleRequest struct {
-	id   int    `json:"id"`
-	name string `json:"name"`
+	Id   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 func main() {
@@ -53,8 +53,8 @@ func main() {
 
 	client := httpclient.NewCserSignedClient(publicKey, privKey)
 	req := ExampleRequest{
-		id:   1,
-		name: "John Doe",
+		Id:   1,
+		Name: "John Doe",
 	}
 	client.SendSignedRequest(context.Background(), "POST", "http://google.com", req)
 
