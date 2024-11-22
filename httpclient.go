@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ed25519"
+	"encoding/json"
 	"github.com/Wavecrest/httpsigcesr/digest"
 	"github.com/Wavecrest/httpsigcesr/signature"
 	"net/http"
@@ -25,19 +26,25 @@ func NewCserSignedClient(publicKey string, privateKey ed25519.PrivateKey) *CserS
 	}
 }
 
-func (csc *CserSignedClient) SendSignedRequest(c context.Context, method string, url string, body []byte) (*http.Response, error) {
-	bodyReader := bytes.NewReader(body)
+func (csc *CserSignedClient) SendSignedRequest(c context.Context, method string, url string, body interface{}) (*http.Response, error) {
+	bodyBytes, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader := bytes.NewReader(bodyBytes)
 	req, err := http.NewRequestWithContext(c, method, url, bodyReader)
 	if err != nil {
 		return nil, err
 	}
-	if len(body) >= 0 {
-		err = digest.AddDigest(req, digest.DigestSha256, body)
+	if len(bodyBytes) >= 0 {
+		err = digest.AddDigest(req, digest.DigestSha256, bodyBytes)
 		if err != nil {
 			return nil, err
 		}
 		req.Header.Add("Content-Type", "application/json")
 	}
+
+	req.Header.Add("signify-resource", csc.publicKey)
 
 	signatureData := signature.NewSignatureData(signatureFields, csc.publicKey, csc.privateKey)
 	err = signatureData.SignRequest(req)
