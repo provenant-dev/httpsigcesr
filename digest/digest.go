@@ -64,7 +64,7 @@ func AddDigest(r *http.Request, algo DigestAlgorithm, b []byte) (err error) {
 	h.Write(b)
 	sum := h.Sum(nil)
 	r.Header.Add(digestHeader,
-		fmt.Sprintf("%s%s%s",
+		fmt.Sprintf("%s%s:%s:",
 			a,
 			digestDelim,
 			base64.StdEncoding.EncodeToString(sum[:])))

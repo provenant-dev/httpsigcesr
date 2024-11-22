@@ -23,7 +23,7 @@ func TestAddDigest(t *testing.T) {
 			},
 			algo:           "SHA-256",
 			body:           []byte("johnny grab your gun"),
-			expectedDigest: "SHA-256=RYiuVuVdRpU+BWcNUUg3sf0EbJjQ9LDj9tUqR546hhk=",
+			expectedDigest: "SHA-256=:RYiuVuVdRpU+BWcNUUg3sf0EbJjQ9LDj9tUqR546hhk=:",
 		},
 		{
 			name: "adds sha512 digest",
@@ -33,7 +33,7 @@ func TestAddDigest(t *testing.T) {
 			},
 			algo:           "SHA-512",
 			body:           []byte("yours is the drill that will pierce the heavens"),
-			expectedDigest: "SHA-512=bM0eBRnZkuiOTsejYNb/UpvFozde+Do1ZqlXfRTS39aGmoEzoXBpjmIIuznPslc3kaprUtI/VXH8/5HsD+thGg==",
+			expectedDigest: "SHA-512==bM0eBRnZkuiOTsejYNb/UpvFozde+Do1ZqlXfRTS39aGmoEzoXBpjmIIuznPslc3kaprUtI/VXH8/5HsD+thGg==:",
 		},
 		{
 			name: "digest already set",
