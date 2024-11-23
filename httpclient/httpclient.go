@@ -36,11 +36,11 @@ func (csc *CserSignedClient) SendSignedRequest(c context.Context, method string,
 	if err != nil {
 		return nil, err
 	}
+	err = digest.AddDigest(req, digest.DigestSha256, bodyBytes)
+	if err != nil {
+		return nil, err
+	}
 	if len(bodyBytes) >= 0 {
-		err = digest.AddDigest(req, digest.DigestSha256, bodyBytes)
-		if err != nil {
-			return nil, err
-		}
 		req.Header.Add("Content-Type", "application/json")
 	}
 
