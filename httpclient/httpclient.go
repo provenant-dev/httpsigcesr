@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	signatureFields = []string{"@method", "@path", "origin-date", "signify-resource"}
+	signatureFields = []string{"@method", "@path", "origin-date", "signify-resource", "content-digest"}
 )
 
 type CserSignedClient struct {

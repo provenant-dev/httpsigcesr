@@ -67,7 +67,7 @@ func AddDigest(r *http.Request, algo DigestAlgorithm, b []byte) (err error) {
 		fmt.Sprintf("%s%s:%s:",
 			a,
 			digestDelim,
-			base64.StdEncoding.EncodeToString(sum[:])))
+			base64.URLEncoding.EncodeToString(sum[:])))
 	return
 }
 
@@ -89,7 +89,7 @@ func AddDigestResponse(r http.ResponseWriter, algo DigestAlgorithm, b []byte) (e
 		fmt.Sprintf("%s%s%s",
 			a,
 			digestDelim,
-			base64.StdEncoding.EncodeToString(sum[:])))
+			base64.URLEncoding.EncodeToString(sum[:])))
 	return
 }
 
@@ -111,7 +111,8 @@ func verifyDigest(r *http.Request, body *bytes.Buffer) (err error) {
 	}
 	h.Write(body.Bytes())
 	sum := h.Sum(nil)
-	encSum := base64.StdEncoding.EncodeToString(sum[:])
+	encSum := fmt.Sprintf(":%s:", base64.URLEncoding.EncodeToString(sum[:]))
+	fmt.Printf("encSum: %s\nelem1: %s", encSum, elem[1])
 	if encSum != elem[1] {
 		err = fmt.Errorf("cannot verify Digest: header Digest does not match the digest of the request body")
 		return
