@@ -17,6 +17,11 @@ const (
 	DigestSha512                 = "SHA-512"
 )
 
+// String method for DigestAlgorithm
+func (d DigestAlgorithm) String() string {
+	return string(d)
+}
+
 var digestToDef = map[DigestAlgorithm]crypto.Hash{
 	DigestSha256: crypto.SHA256,
 	DigestSha512: crypto.SHA512,
@@ -65,7 +70,7 @@ func AddDigest(r *http.Request, algo DigestAlgorithm, b []byte) (err error) {
 	sum := h.Sum(nil)
 	r.Header.Add(digestHeader,
 		fmt.Sprintf("%s%s:%s:",
-			a,
+			strings.ToLower(string(a)),
 			digestDelim,
 			base64.URLEncoding.EncodeToString(sum[:])))
 	return

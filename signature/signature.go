@@ -31,10 +31,10 @@ func (sd *SignatureData) SignatureInput() string {
 		if fieldString == "" {
 			fieldString = fmt.Sprintf("\"%s\"", field)
 		} else {
-			fieldString = fmt.Sprintf("%s, \"%s\"", fieldString, field)
+			fieldString = fmt.Sprintf("%s \"%s\"", fieldString, field)
 		}
 	}
-	return fmt.Sprintf("signify=(%s);created=%d;keyid=\"%s\"", fieldString, sd.created, sd.publicKey)
+	return fmt.Sprintf("(%s);created=%d;keyid=\"%s\";alg=\"%s\"", fieldString, sd.created, sd.publicKey, "ed25519")
 }
 
 func (sd *SignatureData) SignatureBase(r *http.Request) (string, error) {
@@ -45,20 +45,20 @@ func (sd *SignatureData) SignatureBase(r *http.Request) (string, error) {
 			return "", err
 		}
 		if fieldString == "" {
-			fieldString = fmt.Sprintf("%s: %s", field, value)
+			fieldString = fmt.Sprintf("\"%s\": %s", field, value)
 		} else {
-			fieldString = fmt.Sprintf("%s\n%s: %s", fieldString, field, value)
+			fieldString = fmt.Sprintf("%s\n\"%s\": %s", fieldString, field, value)
 		}
 	}
 	if fieldString != "" {
 		fieldString += "\n"
 	}
-	fieldString += sd.SignatureInput()
+	fieldString += fmt.Sprintf("\"@signature-params\": %s", sd.SignatureInput())
 	return fieldString, nil
 }
 
 func (sd *SignatureData) SignRequest(r *http.Request) error {
-	originDate := time.Now().UTC().Format(time.RFC3339)
+	originDate := time.Now().UTC().Format("2006-01-02T15:04:05.000000-07:00")
 	r.Header.Add("origin-date", originDate)
 
 	s, err := sd.SignatureBase(r)
@@ -70,7 +70,7 @@ func (sd *SignatureData) SignRequest(r *http.Request) error {
 	signature := ed25519.Sign(sd.privateKey, []byte(s))
 	signatureCESR := cesr.Encode(signature, "0B")
 
-	r.Header.Add("signature-input", signatureInput)
+	r.Header.Add("signature-input", fmt.Sprintf("signify=%s", signatureInput))
 	r.Header.Add("signature", fmt.Sprintf("indexed=\"?0\";signify=\"%s\"", signatureCESR))
 
 	return nil
