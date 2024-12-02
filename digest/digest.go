@@ -54,7 +54,11 @@ const (
 	digestDelim  = "="
 )
 
-func AddDigest(r *http.Request, algo DigestAlgorithm, b []byte) (err error) {
+// AddDigest computes a digest of the given request body `b` using the specified 
+// hashing algorithm `algo` and adds it to the `Digest` header of the HTTP request `r`.
+// The digest is Base64-encoded, with padding controlled by the optional `withPadding` argument.
+// If `withPadding` is not provided, the default is to use padding.
+func AddDigest(r *http.Request, algo DigestAlgorithm, b []byte, withPadding ...bool) (err error) {
 	dh := r.Header.Get(digestHeader)
 	if dh != "" {
 		err = fmt.Errorf("cannot add Digest: Digest is already set")
@@ -68,15 +72,26 @@ func AddDigest(r *http.Request, algo DigestAlgorithm, b []byte) (err error) {
 	}
 	h.Write(b)
 	sum := h.Sum(nil)
+	// Determine whether to use padding
+	usePadding := true
+	if len(withPadding) > 0 {
+	    usePadding = withPadding[0]
+	}
+	var edig string
+	if usePadding {
+	    edig = base64.URLEncoding.EncodeToString(sum[:]) // Padded Base64
+	} else {
+	    edig = base64.RawURLEncoding.EncodeToString(sum[:]) // Unpadded Base64
+	}
 	r.Header.Add(digestHeader,
 		fmt.Sprintf("%s%s:%s:",
 			strings.ToLower(string(a)),
 			digestDelim,
-			base64.URLEncoding.EncodeToString(sum[:])))
+			edig))
 	return
 }
 
-func AddDigestResponse(r http.ResponseWriter, algo DigestAlgorithm, b []byte) (err error) {
+func AddDigestResponse(r http.ResponseWriter, algo DigestAlgorithm, b []byte, withPadding ...bool) (err error) {
 	_, ok := r.Header()[digestHeader]
 	if ok {
 		err = fmt.Errorf("cannot add Digest: Digest is already set")
@@ -90,15 +105,26 @@ func AddDigestResponse(r http.ResponseWriter, algo DigestAlgorithm, b []byte) (e
 	}
 	h.Write(b)
 	sum := h.Sum(nil)
+	// Determine whether to use padding
+	usePadding := true
+	if len(withPadding) > 0 {
+	    usePadding = withPadding[0]
+	}
+	var edig string
+	if usePadding {
+	    edig = base64.URLEncoding.EncodeToString(sum[:]) // Padded Base64
+	} else {
+	    edig = base64.RawURLEncoding.EncodeToString(sum[:]) // Unpadded Base64
+	}
 	r.Header().Add(digestHeader,
 		fmt.Sprintf("%s%s%s",
 			a,
 			digestDelim,
-			base64.URLEncoding.EncodeToString(sum[:])))
+			edig))
 	return
 }
 
-func verifyDigest(r *http.Request, body *bytes.Buffer) (err error) {
+func verifyDigest(r *http.Request, body *bytes.Buffer, withPadding ...bool) (err error) {
 	d := r.Header.Get(digestHeader)
 	if len(d) == 0 {
 		err = fmt.Errorf("cannot verify Digest: request has no Digest header")
@@ -116,8 +142,19 @@ func verifyDigest(r *http.Request, body *bytes.Buffer) (err error) {
 	}
 	h.Write(body.Bytes())
 	sum := h.Sum(nil)
-	encSum := fmt.Sprintf(":%s:", base64.URLEncoding.EncodeToString(sum[:]))
-	fmt.Printf("encSum: %s\nelem1: %s", encSum, elem[1])
+	// Determine whether to use padding
+	usePadding := true
+	if len(withPadding) > 0 {
+	    usePadding = withPadding[0]
+	}
+	var encSum string
+	if usePadding {
+	    encSum = fmt.Sprintf(":%s:", base64.URLEncoding.EncodeToString(sum[:])) // Padded Base64
+	} else {
+	    encSum = fmt.Sprintf(":%s:", base64.RawURLEncoding.EncodeToString(sum[:])) // Unpadded Base64
+	}
+	fmt.Printf("\n")
+	fmt.Printf("encSum: %s elem1: %s", encSum, elem[1])
 	if encSum != elem[1] {
 		err = fmt.Errorf("cannot verify Digest: header Digest does not match the digest of the request body")
 		return

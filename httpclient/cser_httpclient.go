@@ -36,7 +36,8 @@ func (csc *CserSignedClient) SendSignedRequest(c context.Context, method string,
 	if err != nil {
 		return nil, err
 	}
-	err = digest.AddDigest(req, digest.DigestSha256, bodyBytes)
+	// // digest is url-safe Base64-encoded without padding 
+	err = digest.AddDigest(req, digest.DigestSha256, bodyBytes, false)
 	if err != nil {
 		return nil, err
 	}
