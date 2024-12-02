@@ -153,7 +153,8 @@ func verifyDigest(r *http.Request, body *bytes.Buffer, withPadding ...bool) (err
 	} else {
 	    encSum = fmt.Sprintf(":%s:", base64.RawURLEncoding.EncodeToString(sum[:])) // Unpadded Base64
 	}
-	fmt.Printf("encSum: %s\nelem1: %s", encSum, elem[1])
+	fmt.Printf("\n")
+	fmt.Printf("encSum: %s elem1: %s", encSum, elem[1])
 	if encSum != elem[1] {
 		err = fmt.Errorf("cannot verify Digest: header Digest does not match the digest of the request body")
 		return

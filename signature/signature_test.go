@@ -12,7 +12,7 @@ func TestSignatureInput(t *testing.T) {
 		public   string
 		expected string
 	}{
-		{[]string{"@method", "@path", "origin-date", "signify-resource"}, "public", "signify=(\"@method\", \"@path\", \"origin-date\", \"signify-resource\");created=1618884475;keyid=\"public\""},
+		{[]string{"@method", "@path", "origin-date", "signify-resource"}, "public", "(\"@method\" \"@path\" \"origin-date\" \"signify-resource\");created=1618884475;keyid=\"public\";alg=\"ed25519\""},
 	}
 
 	// Run each test case

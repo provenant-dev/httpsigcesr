@@ -12,6 +12,7 @@ func TestAddDigest(t *testing.T) {
 		r              func() *http.Request
 		algo           DigestAlgorithm
 		body           []byte
+		withPadding    bool
 		expectedDigest string
 		expectError    bool
 	}{
@@ -23,7 +24,19 @@ func TestAddDigest(t *testing.T) {
 			},
 			algo:           "SHA-256",
 			body:           []byte("johnny grab your gun"),
-			expectedDigest: "SHA-256=:RYiuVuVdRpU-BWcNUUg3sf0EbJjQ9LDj9tUqR546hhk=:",
+			withPadding:    true,
+			expectedDigest: "sha-256=:RYiuVuVdRpU-BWcNUUg3sf0EbJjQ9LDj9tUqR546hhk=:",
+		},
+		{
+			name: "adds sha256 digest without padding",
+			r: func() *http.Request {
+				r, _ := http.NewRequest("POST", "example.com", nil)
+				return r
+			},
+			algo:           "SHA-256",
+			body:           []byte("johnny grab your gun"),
+			withPadding:    false,
+			expectedDigest: "sha-256=:RYiuVuVdRpU-BWcNUUg3sf0EbJjQ9LDj9tUqR546hhk:",
 		},
 		{
 			name: "adds sha512 digest",
@@ -33,7 +46,19 @@ func TestAddDigest(t *testing.T) {
 			},
 			algo:           "SHA-512",
 			body:           []byte("yours is the drill that will pierce the heavens"),
-			expectedDigest: "SHA-512=:bM0eBRnZkuiOTsejYNb_UpvFozde-Do1ZqlXfRTS39aGmoEzoXBpjmIIuznPslc3kaprUtI_VXH8_5HsD-thGg==:",
+			withPadding:    true,
+			expectedDigest: "sha-512=:bM0eBRnZkuiOTsejYNb_UpvFozde-Do1ZqlXfRTS39aGmoEzoXBpjmIIuznPslc3kaprUtI_VXH8_5HsD-thGg==:",
+		},
+		{
+			name: "adds sha512 digest without padding",
+			r: func() *http.Request {
+				r, _ := http.NewRequest("POST", "example.com", nil)
+				return r
+			},
+			algo:           "SHA-512",
+			body:           []byte("yours is the drill that will pierce the heavens"),
+			withPadding:    false,
+			expectedDigest: "sha-512=:bM0eBRnZkuiOTsejYNb_UpvFozde-Do1ZqlXfRTS39aGmoEzoXBpjmIIuznPslc3kaprUtI_VXH8_5HsD-thGg:",
 		},
 		{
 			name: "digest already set",
@@ -61,7 +86,7 @@ func TestAddDigest(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			test := test
 			req := test.r()
-			err := AddDigest(req, test.algo, test.body)
+			err := AddDigest(req, test.algo, test.body, test.withPadding)
 			gotErr := err != nil
 			if gotErr != test.expectError {
 				if test.expectError {
@@ -84,25 +109,48 @@ func TestVerifyDigest(t *testing.T) {
 		name        string
 		r           func() *http.Request
 		body        []byte
+		withPadding bool
 		expectError bool
 	}{
 		{
 			name: "verify sha256",
 			r: func() *http.Request {
 				r, _ := http.NewRequest("POST", "example.com", nil)
-				r.Header.Set("content-digest", "SHA-256=:RYiuVuVdRpU-BWcNUUg3sf0EbJjQ9LDj9tUqR546hhk=:")
+				r.Header.Set("content-digest", "sha-256=:RYiuVuVdRpU-BWcNUUg3sf0EbJjQ9LDj9tUqR546hhk=:")
 				return r
 			},
 			body: []byte("johnny grab your gun"),
+			withPadding: true,
+		},
+		{
+			name: "verify sha256 without padding",
+			r: func() *http.Request {
+				r, _ := http.NewRequest("POST", "example.com", nil)
+				r.Header.Set("content-digest", "sha-256=:RYiuVuVdRpU-BWcNUUg3sf0EbJjQ9LDj9tUqR546hhk:")
+				return r
+			},
+			body: []byte("johnny grab your gun"),
+			withPadding: false,
 		},
 		{
 			name: "verify sha512",
 			r: func() *http.Request {
 				r, _ := http.NewRequest("POST", "example.com", nil)
-				r.Header.Set("content-digest", "SHA-512=:bM0eBRnZkuiOTsejYNb_UpvFozde-Do1ZqlXfRTS39aGmoEzoXBpjmIIuznPslc3kaprUtI_VXH8_5HsD-thGg==:")
+				r.Header.Set("content-digest", "sha-512=:bM0eBRnZkuiOTsejYNb_UpvFozde-Do1ZqlXfRTS39aGmoEzoXBpjmIIuznPslc3kaprUtI_VXH8_5HsD-thGg==:")
 				return r
 			},
 			body: []byte("yours is the drill that will pierce the heavens"),
+			withPadding: true,
+		},
+		{
+			name: "verify sha512 without padding",
+			r: func() *http.Request {
+				r, _ := http.NewRequest("POST", "example.com", nil)
+				r.Header.Set("content-digest", "sha-512=:bM0eBRnZkuiOTsejYNb_UpvFozde-Do1ZqlXfRTS39aGmoEzoXBpjmIIuznPslc3kaprUtI_VXH8_5HsD-thGg:")
+				return r
+			},
+			body: []byte("yours is the drill that will pierce the heavens"),
+			withPadding: false,
 		},
 		{
 			name: "no digest header",
@@ -117,7 +165,7 @@ func TestVerifyDigest(t *testing.T) {
 			name: "malformed digest",
 			r: func() *http.Request {
 				r, _ := http.NewRequest("POST", "example.com", nil)
-				r.Header.Set("content-digest", "SHA-256am9obm55IGdyYWIgeW91ciBndW7jsMRCmPwcFJr79MiZb7kkJ65B5GSbk0yklZkbeFK4VQ==")
+				r.Header.Set("content-digest", "sha-256am9obm55IGdyYWIgeW91ciBndW7jsMRCmPwcFJr79MiZb7kkJ65B5GSbk0yklZkbeFK4VQ==")
 				return r
 			},
 			body:        []byte("Tochee and Ozzie BFFs forever"),
@@ -137,7 +185,7 @@ func TestVerifyDigest(t *testing.T) {
 			name: "bad digest",
 			r: func() *http.Request {
 				r, _ := http.NewRequest("POST", "example.com", nil)
-				r.Header.Set("content-digest", "SHA-256=bm9obm55IGdyYWIgeW91ciBndW7jsMRCmPwcFJr79MiZb7kkJ65B5GSbk0yklZkbeFK4VQ==")
+				r.Header.Set("content-digest", "sha-256=bm9obm55IGdyYWIgeW91ciBndW7jsMRCmPwcFJr79MiZb7kkJ65B5GSbk0yklZkbeFK4VQ==")
 				return r
 			},
 			body:        []byte("johnny grab your gun"),
@@ -149,7 +197,7 @@ func TestVerifyDigest(t *testing.T) {
 			test := test
 			req := test.r()
 			buf := bytes.NewBuffer(test.body)
-			err := verifyDigest(req, buf)
+			err := verifyDigest(req, buf, test.withPadding)
 			gotErr := err != nil
 			if gotErr != test.expectError {
 				if test.expectError {
