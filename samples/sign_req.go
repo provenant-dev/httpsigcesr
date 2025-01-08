@@ -34,10 +34,27 @@ type OriginRequest struct {
 }
 
 func main() {
+   
+   // get args
+      var fromId string
+      var toId   string
+
+   if len( os.Args ) == 3 {
+      fromId = os.Args[1]
+      toId   = os.Args[2]
+   }
+
+   if (len(toId) == 0) && (len(fromId) == 0) {
+		toId   = "+17035550001"
+		fromId = "+15715550000"
+   }
+   fmt.Println( "using from and to:", fromId, toId )
+
+
 	//read PEM file from disk
 	privKeyPath := os.Getenv("PRIVATE_KEY_PATH")
 	if privKeyPath == "" {
-		privKeyPath = "../privkey.pem" // Default path
+		privKeyPath = "/etc/kamailio/privkey.pem" // Default path
 	}
 	privKey, err := readPemFile(privKeyPath)
 	if err != nil {
@@ -46,7 +63,7 @@ func main() {
 	}
 	pubKeyPath := os.Getenv("PUBLIC_KEY_PATH")
 	if pubKeyPath == "" {
-		pubKeyPath = "../pubkey.txt" // Default path
+		pubKeyPath = "/etc/kamailio/pubkey.txt" // Default path
 	}
 	publicKeyBytes, err := os.ReadFile(pubKeyPath)
 	if err != nil {
@@ -54,12 +71,13 @@ func main() {
 		os.Exit(1)
 	}
 	publicKey := string(publicKeyBytes)
+
 	
 	var client httpclient.HttpClient = httpclient.NewCserSignedClient(publicKey, privKey)
 	req := OriginRequest{
-		Orig: "+17035550001",
-		Dest: "15715550000",
-		Evd: "ELU_IjvJP378nR4ET-byUbDZqlXIJBkE8RJ7o1eJJRpQ",
+		Orig: fromId,
+		Dest: toId,
+      Evd: "EPRYuyESGZDBlsHvfPbTrYd0ZnW9d4ZGWm_rqRoHr-lE",
 		OrigID: "e0ac7b44-1fc3-4794-8edd-34b83c018fe9",
     	RequestID: "70664125-c88d-49d6-b66f-0510c20fc3a6",
 	}
