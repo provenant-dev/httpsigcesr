@@ -39,15 +39,14 @@ func main() {
       var fromId string
       var toId   string
 
+   toId   = "src-unk"
+   fromId = "dest-unk"
+
    if len( os.Args ) == 3 {
       fromId = os.Args[1]
       toId   = os.Args[2]
-   }
-
-   if (len(toId) == 0) && (len(fromId) == 0) {
-		toId   = "+17035550001"
-		fromId = "+15715550000"
-   }
+   } 
+   
    fmt.Println( "using from and to:", fromId, toId )
 
 
