@@ -33,66 +33,6 @@ type OriginRequest struct {
 	RequestID string `json:"request_id"`
 }
 
-func main() {
-   
-   // get args
-      var fromId string
-      var toId   string
-
-   toId   = "src-unk"
-   fromId = "dest-unk"
-
-   if len( os.Args ) == 3 {
-      fromId = os.Args[1]
-      toId   = os.Args[2]
-   } 
-   
-   fmt.Println( "using from and to:", fromId, toId )
-
-
-	//read PEM file from disk
-	privKeyPath := os.Getenv("PRIVATE_KEY_PATH")
-	if privKeyPath == "" {
-		privKeyPath = "/etc/kamailio/privkey.pem" // Default path
-	}
-	privKey, err := readPemFile(privKeyPath)
-	if err != nil {
-		fmt.Println("Error reading PEM file")
-		os.Exit(1)
-	}
-	pubKeyPath := os.Getenv("PUBLIC_KEY_PATH")
-	if pubKeyPath == "" {
-		pubKeyPath = "/etc/kamailio/pubkey.txt" // Default path
-	}
-	publicKeyBytes, err := os.ReadFile(pubKeyPath)
-	if err != nil {
-		fmt.Println("Error reading public key file")
-		os.Exit(1)
-	}
-	publicKey := string(publicKeyBytes)
-
-	
-	var client httpclient.HttpClient = httpclient.NewCserSignedClient(publicKey, privKey)
-	req := OriginRequest{
-		Orig: fromId,
-		Dest: toId,
-      Evd: "EPRYuyESGZDBlsHvfPbTrYd0ZnW9d4ZGWm_rqRoHr-lE",
-		OrigID: "e0ac7b44-1fc3-4794-8edd-34b83c018fe9",
-    	RequestID: "70664125-c88d-49d6-b66f-0510c20fc3a6",
-	}
-	resp, err := client.SendSignedRequest(context.Background(), "POST", "https://origin.dev.provenant.net/v1/signer/voice/sign", req)
-	// // resp, err := client.SendSignedRequest(context.Background(), "POST", "http://localhost:9083/v1/signer/voice/sign", req)
-
-	// Log the response or error
-	if err != nil {
-		fmt.Printf("Error in signed request: %s\n", err)
-		return
-	}
-	if resp != nil {
-		logResponse(resp)
-	}
-
-}
 
 // Helper function to log the response
 func logResponse(resp *http.Response) {
@@ -117,4 +57,81 @@ func logResponse(resp *http.Response) {
 	// Ensure the response body is closed
 	resp.Body.Close()
 	fmt.Println("---------------------------")
+}
+
+
+func main() {
+   
+   // get args
+      var fromId     string
+      var toId       string
+      var evidence   string
+      var url        string
+
+   toId   = "src-unk"
+   fromId = "dest-unk"
+
+   if len( os.Args ) == 5 {
+      fromId   = os.Args[1]
+      toId     = os.Args[2]
+      evidence = os.Args[4]
+      url      = os.Args[5]
+   } else {
+      fmt.Println( "usage:" , os.Args[0], " from to evidence url" );
+      fmt.Println( "  sample urls: https://origin.dev.provenant.net/v1/signer/voice/sign" )
+      fmt.Println( "  sample urls: https://origin.stage.provenant.net/v1/signer/voice/sign" )
+      fmt.Println( "  optionnal env vars: PRIVATE_KEY_PATH and PUBLIC_KEY_PATH" );
+      fmt.Println( "    if not set then ppath is ./" );
+      return;
+   }
+
+   
+   fmt.Println( "using from and to:", fromId, toId, " evidence:", evidence )
+
+
+	//read PEM file from disk
+	privKeyPath := os.Getenv("PRIVATE_KEY_PATH")
+	if privKeyPath == "" {
+		privKeyPath = "/etc/kamailio/privkey.pem" // Default path
+	}
+	privKey, err := readPemFile(privKeyPath)
+	if err != nil {
+		fmt.Println("Error reading PEM file")
+		os.Exit(1)
+	}
+	pubKeyPath := os.Getenv("PUBLIC_KEY_PATH")
+	if pubKeyPath == "" {
+		pubKeyPath = "/etc/kamailio/pubkey.txt" // Default path
+	}
+	publicKeyBytes, err := os.ReadFile(pubKeyPath)
+	if err != nil {
+		fmt.Println("Error reading public key file")
+		os.Exit(1)
+	}
+	publicKey := string(publicKeyBytes)
+
+   fmt.Println( "priv key path:", privKeyPath );
+   fmt.Println( "pub  key path:", pubKeyPath );
+	
+	var client httpclient.HttpClient = httpclient.NewCserSignedClient(publicKey, privKey)
+	req := OriginRequest{
+		Orig: fromId,
+		Dest: toId,
+      //Evd: "EPRYuyESGZDBlsHvfPbTrYd0ZnW9d4ZGWm_rqRoHr-lE",
+      Evd: evidence,
+		OrigID: "e0ac7b44-1fc3-4794-8edd-34b83c018fe9",
+    	RequestID: "70664125-c88d-49d6-b66f-0510c20fc3a6",
+	}
+	resp, err := client.SendSignedRequest(context.Background(), "POST", url, req)
+	//resp, err := client.SendSignedRequest(context.Background(), "POST", "https://origin.dev.provenant.net/v1/signer/voice/sign", req)
+
+	// Log the response or error
+	if err != nil {
+		fmt.Printf("Error in signed request: %s\n", err)
+		return
+	}
+	if resp != nil {
+		logResponse(resp)
+	}
+
 }

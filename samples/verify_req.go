@@ -34,10 +34,38 @@ type OriginRequest struct {
 }
 
 func main() {
+
+   var fromId     string
+   var toId       string
+   var identity   string
+   var requestid  string
+   var url        string
+
+   toId   = "src-unk"
+   fromId = "dest-unk"
+
+   if len( os.Args ) == 5 {
+      fromId    = os.Args[1]
+      toId      = os.Args[2]
+      identity  = os.Args[3]
+      requestid = os.Args[4]
+      url       = os.Args[5]
+   } else {
+      fmt.Println( "usage:" , os.Args[0], " from to iidentity requestId" );
+      fmt.Println( "  sample urls: https://origin.dev.provenant.net/v1/verifier/voice/verify" )
+      fmt.Println( "  sample urls: https://origin.stage.provenant.net/v1/verifier/voice/verify" )
+      fmt.Println( "  optional env vars: PRIVATE_KEY_PATH and PUBLIC_KEY_PATH" );
+      fmt.Println( "    if not set then path is ./" );
+      return;
+   }
+
+   
+   fmt.Println( "\n\nusing from and to:", fromId, toId, "\n identity:", identity, "\nrequestid:", requestid, "\n\n" )
+
 	//read PEM file from disk
 	privKeyPath := os.Getenv("PRIVATE_KEY_PATH")
 	if privKeyPath == "" {
-		privKeyPath = "../privkey.pem" // Default path
+		privKeyPath = "/etc/kamailio/privkey.pem" // Default path
 	}
 	privKey, err := readPemFile(privKeyPath)
 	if err != nil {
@@ -46,7 +74,7 @@ func main() {
 	}
 	pubKeyPath := os.Getenv("PUBLIC_KEY_PATH")
 	if pubKeyPath == "" {
-		pubKeyPath = "../pubkey.txt" // Default path
+		pubKeyPath = "/etc/kamailio/pubkey.txt" // Default path
 	}
 	publicKeyBytes, err := os.ReadFile(pubKeyPath)
 	if err != nil {
@@ -57,12 +85,19 @@ func main() {
 	
 	var client httpclient.HttpClient = httpclient.NewCserSignedClient(publicKey, privKey)
 	req := OriginRequest{
-		Orig: "+17035550001",
-		Dest: "15715550000",
-		Identity: "eyJhbGciOiJFZERTQSIsInR5cCI6InBhc3Nwb3J0IiwicHB0IjoiVlZQIn0.eyJvcmlnIjp7InRuIjpbIjE3MDM1NTUwMDAxIl19LCJkZXN0Ijp7InRuIjpbIjE1NzE1NTUwMDAwIl19LCJldmQiOiJFTFVfSWp2SlAzNzhuUjRFVC1ieVViRFpxbFhJSkJrRThSSjdvMWVKSlJwUSIsImF0dGVzdCI6IkEiLCJvcmlnSWQiOiJlMGFjN2I0NC0xZmMzLTQ3OTQtOGVkZC0zNGI4M2MwMThmZTkiLCJhaWQiOiJFTXBIVHlkcmVSb1pzNTkwb01IM3R5TkNJMFFxVkZjdkVubHJwUVRtNWx2bSIsImlhdCI6MTczMzE3MzQ5NSwiZXhwIjoxNzMzMTczNTI1LCJqdGkiOiI3MDY2NDEyNS1jODhkLTQ5ZDYtYjY2Zi0wNTEwYzIwZmMzYTYifQ.I46QfjH5uvEZlOX9_0icSzqpnMDOzGGH190fyK2hjuIIvdcbdEAWbTADCEMG4z1aSbf4D4GWsP6UTje8ToXRAQ",
-    	RequestID: "70664125-c88d-49d6-b66f-0510c20fc3a6"}
-	resp, err := client.SendSignedRequest(context.Background(), "POST", "https://origin.dev.provenant.net/v1/verifier/voice/verify", req)
-	// // resp, err := client.SendSignedRequest(context.Background(), "POST", "http://localhost:9083/v1/verifier/voice/verify", req)
+		Orig: fromId,
+		Dest: toId,
+		Identity: identity,
+    	RequestID: requestid}
+
+	//req := OriginRequest{
+	//	Orig: "+17035550001",
+	//	Dest: "15715550000",
+	//	Identity: "eyJhbGciOiJFZERTQSIsInR5cCI6InBhc3Nwb3J0IiwicHB0IjoiVlZQIn0.eyJvcmlnIjp7InRuIjpbIjE3MDM1NTUwMDAxIl19LCJkZXN0Ijp7InRuIjpbIjE1NzE1NTUwMDAwIl19LCJldmQiOiJFTFVfSWp2SlAzNzhuUjRFVC1ieVViRFpxbFhJSkJrRThSSjdvMWVKSlJwUSIsImF0dGVzdCI6IkEiLCJvcmlnSWQiOiJlMGFjN2I0NC0xZmMzLTQ3OTQtOGVkZC0zNGI4M2MwMThmZTkiLCJhaWQiOiJFTXBIVHlkcmVSb1pzNTkwb01IM3R5TkNJMFFxVkZjdkVubHJwUVRtNWx2bSIsImlhdCI6MTczMzE3MzQ5NSwiZXhwIjoxNzMzMTczNTI1LCJqdGkiOiI3MDY2NDEyNS1jODhkLTQ5ZDYtYjY2Zi0wNTEwYzIwZmMzYTYifQ.I46QfjH5uvEZlOX9_0icSzqpnMDOzGGH190fyK2hjuIIvdcbdEAWbTADCEMG4z1aSbf4D4GWsP6UTje8ToXRAQ",
+   // 	RequestID: "70664125-c88d-49d6-b66f-0510c20fc3a6"}
+	
+   resp, err := client.SendSignedRequest(context.Background(), "POST", url, req)
+   //resp, err := client.SendSignedRequest(context.Background(), "POST", "https://origin.dev.provenant.net/v1/verifier/voice/verify", req)
 
 	// Log the response or error
 	if err != nil {
