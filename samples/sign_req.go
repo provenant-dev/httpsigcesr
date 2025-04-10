@@ -74,8 +74,8 @@ func main() {
    if len( os.Args ) == 5 {
       fromId   = os.Args[1]
       toId     = os.Args[2]
-      evidence = os.Args[4]
-      url      = os.Args[5]
+      evidence = os.Args[3]
+      url      = os.Args[4]
    } else {
       fmt.Println( "usage:" , os.Args[0], " from to evidence url" );
       fmt.Println( "  sample urls: https://origin.dev.provenant.net/v1/signer/voice/sign" )
@@ -86,7 +86,7 @@ func main() {
    }
 
    
-   fmt.Println( "using from and to:", fromId, toId, " evidence:", evidence )
+   fmt.Println( "using from and to:", fromId, toId, " evidence:", evidence, " url:", url )
 
 
 	//read PEM file from disk
@@ -111,7 +111,7 @@ func main() {
 	publicKey := string(publicKeyBytes)
 
    fmt.Println( "priv key path:", privKeyPath );
-   fmt.Println( "pub  key path:", pubKeyPath );
+   fmt.Println( "pub  key path:", pubKeyPath  );
 	
 	var client httpclient.HttpClient = httpclient.NewCserSignedClient(publicKey, privKey)
 	req := OriginRequest{

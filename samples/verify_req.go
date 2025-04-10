@@ -44,7 +44,7 @@ func main() {
    toId   = "src-unk"
    fromId = "dest-unk"
 
-   if len( os.Args ) == 5 {
+   if len( os.Args ) == 6 {
       fromId    = os.Args[1]
       toId      = os.Args[2]
       identity  = os.Args[3]
@@ -60,7 +60,7 @@ func main() {
    }
 
    
-   fmt.Println( "\n\nusing from and to:", fromId, toId, "\n identity:", identity, "\nrequestid:", requestid, "\n\n" )
+   fmt.Println( "\n\nusing from and to and url :", fromId, toId, url , "\n identity:", identity, "\nrequestid:", requestid, "\n\n" )
 
 	//read PEM file from disk
 	privKeyPath := os.Getenv("PRIVATE_KEY_PATH")
