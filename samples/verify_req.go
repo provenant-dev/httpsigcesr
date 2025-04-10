@@ -8,6 +8,7 @@ import (
 	"os"
 	"io"
 	"net/http"
+   "encoding/json"
 )
 
 func readPemFile(fileName string) ([]byte, error) {
@@ -51,7 +52,7 @@ func main() {
       requestid = os.Args[4]
       url       = os.Args[5]
    } else {
-      fmt.Println( "usage:" , os.Args[0], " from to iidentity requestId" );
+      fmt.Println( "usage:" , os.Args[0], " from to identity requestId" );
       fmt.Println( "  sample urls: https://origin.dev.provenant.net/v1/verifier/voice/verify" )
       fmt.Println( "  sample urls: https://origin.stage.provenant.net/v1/verifier/voice/verify" )
       fmt.Println( "  optional env vars: PRIVATE_KEY_PATH and PUBLIC_KEY_PATH" );
@@ -97,7 +98,6 @@ func main() {
    // 	RequestID: "70664125-c88d-49d6-b66f-0510c20fc3a6"}
 	
    resp, err := client.SendSignedRequest(context.Background(), "POST", url, req)
-   //resp, err := client.SendSignedRequest(context.Background(), "POST", "https://origin.dev.provenant.net/v1/verifier/voice/verify", req)
 
 	// Log the response or error
 	if err != nil {
@@ -105,13 +105,13 @@ func main() {
 		return
 	}
 	if resp != nil {
-		logResponse(resp)
+		dispResponse(resp)
 	}
 
 }
 
 // Helper function to log the response
-func logResponse(resp *http.Response) {
+func dispResponse(resp *http.Response) {
 	fmt.Println("------ HTTP Response ------")
 	fmt.Printf("Status: %s\n", resp.Status)
 	fmt.Println("Headers:")
@@ -121,16 +121,96 @@ func logResponse(resp *http.Response) {
 		}
 	}
 
+   type Result struct {
+      Result      uint32   `json:"result"`
+      Epl         string   `json:"epl"`
+      Request_id  string   `json:"request_id"`
+      Attestation string   `json:"attestaion"`
+   }
+
+   // sample response
+   // {
+   //    "result": 34111494,
+   //    "epl": "Evidence validation: Passed, Signature validation: Not passed, avet status: Valid, arcd status: Missing, tn status: Valid, prox status: Missing, a2sig status: Valid, alloc status: Valid, ovet status: Missing",
+   //    "request_id": "70664125-c88d-49d6-b66f-0510c20fc3a6"
+   // }
+
+
 	// Read and log the response body
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Printf("Error reading response body: %s\n", err)
 	} else {
-		fmt.Printf("Body:\n")
-		fmt.Printf("%s\n", string(bodyBytes))
+		//fmt.Printf("Body:\n")
+		//fmt.Printf("%s\n\n", string(bodyBytes))
+
+      var res Result
+      err := json.Unmarshal( []byte(bodyBytes), &res )
+      if err != nil {
+         fmt.Println( err )
+      }
+
+      //fmt.Printf( "by:   %d\n", res.Result )
+      if isAttestation_A( res.Result ) {
+            //fmt.Println( "A attestation" )
+            res.Attestation = "A"
+      } else 
+      if isAttestation_B( res.Result ) {
+            //fmt.Println( "B attestation" )
+            res.Attestation = "B"
+      } else {
+            //fmt.Println( "C attestation" )
+            res.Attestation = "C"
+      }
+
+      json, err := json.Marshal( res )
+      if err == nil {
+         fmt.Println( string(json) )
+      } else {
+         fmt.Println( "error parsing json" )
+      }
 	}
 
 	// Ensure the response body is closed
 	resp.Body.Close()
 	fmt.Println("---------------------------")
+}
+
+func isAttestation_A( res_code uint32 ) bool {
+   const mask uint32 = 34111488
+
+   //fmt.Println("Attestation A" )
+   //fmt.Printf( "mask:  %x %32b\n", mask    , mask     )
+   //fmt.Printf( "code:  %x %32b\n", res_code, res_code )
+   //fmt.Printf( "mask: %x %32b\n", ^mask   , ^mask    )
+
+   //fmt.Printf( "res : %x  %32b\n", (res_code & mask)  ,(res_code & mask) )
+   //fmt.Printf( "res : %x        %32b\n", (res_code & ^mask) ,(res_code & ^mask) )
+
+   if (res_code &^ mask) == 0 {
+      return true
+   } else
+   {
+      return false
+   }
+}
+
+
+func isAttestation_B( res_code uint32 ) bool {
+   const mask uint32 = 34308100
+
+   //fmt.Println("Attestation B" )
+   //fmt.Printf( "mask:  %d %32b\n", mask    , mask     )
+   //fmt.Printf( "code:  %d %32b\n", res_code, res_code )
+   //fmt.Printf( "mask:%d %32b\n", ^mask   , ^mask    )
+
+   //fmt.Printf( "res : %d  %32b\n", (res_code & mask)  ,(res_code & mask) )
+   //fmt.Printf( "res : %d        %32b\n", (res_code & ^mask) ,(res_code & ^mask) )
+
+   if (res_code & ^mask) == 0 {
+      return true
+   } else
+   {
+      return false
+   }
 }
