@@ -112,6 +112,7 @@ func main() {
 
 // Helper function to log the response
 func dispResponse(resp *http.Response) {
+
 	fmt.Println("------ HTTP Response ------")
 	fmt.Printf("Status: %s\n", resp.Status)
 	fmt.Println("Headers:")
@@ -125,7 +126,7 @@ func dispResponse(resp *http.Response) {
       Result      uint32   `json:"result"`
       Epl         string   `json:"epl"`
       Request_id  string   `json:"request_id"`
-      Attestation string   `json:"attestaion"`
+      IsValid     string   `json:"isvalid"`
    }
 
    // sample response
@@ -150,18 +151,24 @@ func dispResponse(resp *http.Response) {
          fmt.Println( err )
       }
 
-      //fmt.Printf( "by:   %d\n", res.Result )
-      if isAttestation_A( res.Result ) {
-            //fmt.Println( "A attestation" )
-            res.Attestation = "A"
-      } else 
-      if isAttestation_B( res.Result ) {
-            //fmt.Println( "B attestation" )
-            res.Attestation = "B"
+      if isValidEvidence( res.Result ) {
+         res.IsValid = "Y"
       } else {
-            //fmt.Println( "C attestation" )
-            res.Attestation = "C"
+         res.IsValid = "N"
       }
+
+      //fmt.Printf( "by:   %d\n", res.Result )
+      //if isAttestation_A( res.Result ) {
+      //      //fmt.Println( "A attestation" )
+      //      res.Attestation = "A"
+      //} else 
+      //if isAttestation_B( res.Result ) {
+      //      //fmt.Println( "B attestation" )
+      //      res.Attestation = "B"
+      //} else {
+      //      //fmt.Println( "C attestation" )
+      //      res.Attestation = "C"
+      //}
 
       json, err := json.Marshal( res )
       if err == nil {
@@ -206,6 +213,18 @@ func isAttestation_B( res_code uint32 ) bool {
 
    //fmt.Printf( "res : %d  %32b\n", (res_code & mask)  ,(res_code & mask) )
    //fmt.Printf( "res : %d        %32b\n", (res_code & ^mask) ,(res_code & ^mask) )
+
+   if (res_code &^ mask) == 0 {
+      return true
+   } else
+   {
+      return false
+   }
+}
+
+
+func isValidEvidence( res_code uint32 ) bool {
+   const mask uint32 = 0x2d8
 
    if (res_code &^ mask) == 0 {
       return true
