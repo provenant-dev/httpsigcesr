@@ -207,7 +207,7 @@ func isAttestation_B( res_code uint32 ) bool {
    //fmt.Printf( "res : %d  %32b\n", (res_code & mask)  ,(res_code & mask) )
    //fmt.Printf( "res : %d        %32b\n", (res_code & ^mask) ,(res_code & ^mask) )
 
-   if (res_code & ^mask) == 0 {
+   if (res_code &^ mask) == 0 {
       return true
    } else
    {
