@@ -8,6 +8,9 @@ import (
 	"os"
 	"io"
 	"net/http"
+   kalbi "github.com/KalbiProject/kalbi"
+	"github.com/KalbiProject/kalbi/sip/message"
+	"github.com/KalbiProject/kalbi/sip/status"
 )
 
 func readPemFile(fileName string) ([]byte, error) {
@@ -59,33 +62,7 @@ func logResponse(resp *http.Response) {
 	fmt.Println("---------------------------")
 }
 
-
-func main() {
-   
-   // get args
-      var fromId     string
-      var toId       string
-      var evidence   string
-      var url        string
-
-   toId   = "src-unk"
-   fromId = "dest-unk"
-
-   if len( os.Args ) == 5 {
-      fromId   = os.Args[1]
-      toId     = os.Args[2]
-      evidence = os.Args[3]
-      url      = os.Args[4]
-   } else {
-      fmt.Println( "usage:" , os.Args[0], " from to evidence url" );
-      fmt.Println( "  sample urls: https://origin.dev.provenant.net/v1/signer/voice/sign" )
-      fmt.Println( "  sample urls: https://origin.stage.provenant.net/v1/signer/voice/sign" )
-      fmt.Println( "  optionnal env vars: PRIVATE_KEY_PATH and PUBLIC_KEY_PATH" );
-      fmt.Println( "    if not set then ppath is ./" );
-      return;
-   }
-
-   
+func getSig( fromId string, toId string, evidence string, url string ) {
    fmt.Println( "using from and to:", fromId, toId, " evidence:", evidence, " url:", url )
 
 
@@ -133,5 +110,50 @@ func main() {
 	if resp != nil {
 		logResponse(resp)
 	}
+
+}
+
+
+func main() {
+   
+   // get args
+      var fromId     string
+      var toId       string
+      var evidence   string
+      var url        string
+
+   toId   = "src-unk"
+   fromId = "dest-unk"
+
+   if len( os.Args ) == 5 {
+      fromId   = os.Args[1]
+      toId     = os.Args[2]
+      evidence = os.Args[3]
+      url      = os.Args[4]
+   } else {
+      fmt.Println( "usage:" , os.Args[0], " from to evidence url" );
+      fmt.Println( "  sample urls: https://origin.dev.provenant.net/v1/signer/voice/sign" )
+      fmt.Println( "  sample urls: https://origin.stage.provenant.net/v1/signer/voice/sign" )
+      fmt.Println( "  optionnal env vars: PRIVATE_KEY_PATH and PUBLIC_KEY_PATH" );
+      fmt.Println( "    if not set then ppath is ./" );
+      return;
+   }
+
+   getSig( fromId, toId, evidence, url );
+   
+   stack := kalbi.NewSipStack( "sign redir" );
+
+   stack.INVITE(func(event message.SipEventObject) {
+		tx := event.GetTransaction()
+		response := message.NewResponse(tx, status.Trying, nil)
+		tx.Send(response, string(tx.GetOrigin().Contact.Host), string(tx.GetOrigin().Contact.Port))
+
+	})
+
+
+   stack.CreateListenPoint("udp", "127.0.0.1", 5060)
+	stack.CreateListenPoint("udp", "127.0.0.1", 5061)
+	stack.Start()
+
 
 }
